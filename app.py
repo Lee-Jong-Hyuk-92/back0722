@@ -1,4 +1,3 @@
-# C:\Users\302-1\Desktop\backend0709-1\app.py
 import sys
 import os
 from flask import Flask, jsonify, request
@@ -78,6 +77,14 @@ os.makedirs(app.config['PROCESSED_FOLDER_MODEL3'], exist_ok=True)
 db.init_app(app)
 mongo_client = MongoDBClient(uri=app.config['MONGO_URI'], db_name=app.config['MONGO_DB_NAME'])
 
+# MongoDB 연결 테스트
+try:
+    mongo_client.client.admin.command('ping')
+    print(f"✅ MongoDB에 성공적으로 연결되었습니다: {app.config['MONGO_URI']}")
+except Exception as e:
+    print(f"❌ MongoDB 연결 실패: {e}")
+    sys.exit(1) # 연결 실패 시 앱 종료
+
 app.extensions = getattr(app, 'extensions', {})
 app.extensions['mongo_client'] = mongo_client
 app.extensions['medgemma_model'] = medgemma_model
@@ -104,7 +111,8 @@ def index():
 
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify({"error": "서버 내부 오류"}), 500
+    app.logger.error(f"서버 내부 오류 발생: {error}")
+    return jsonify({"error": "서버 내부 오류가 발생했습니다."}), 500
 
 # ✅ 실행
 if __name__ == '__main__':
